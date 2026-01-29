@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FosStars Bot</title>
+    <style>
+        :root {
+            --primary-color: #ff8c42;
+            --background-color: #2d2d2d;
+            --container-color: #3a3a3a;
+            --text-color: #e0e0e0;
+            --secondary-text: #b0b0b0;
+            --button-color: #4a4a4a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: fixed;
+            touch-action: manipulation;
+        }
+        
+        #app {
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            background-color: var(--container-color);
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+        
+        /* Адаптивные размеры для разных устройств */
+        @media (max-width: 480px) {
+            #app { padding: 10px; }
+        }
+        
+        @media (min-width: 768px) {
+            #app { 
+                max-width: 500px; 
+                margin: 0 auto;
+                border-radius: 20px;
+                height: 90vh;
+                min-height: 600px;
+                margin-top: 5vh;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            #app { 
+                max-width: 600px; 
+                min-height: 700px;
+            }
+        }
+        
+        /* Стили для снежинок */
+        .snowflake {
+            position: absolute;
+            background-color: var(--text-color);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: fall linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+        
+        /* Контент - всегда на 100% ширины контейнера */
+        .content {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .header {
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        .username {
+            font-size: clamp(28px, 6vw, 40px);
+            color: var(--primary-color);
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(255, 140, 66, 0.3);
+            word-break: break-word;
+            padding: 0 10px;
+        }
+        
+        .balance-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .balance-container {
+            width: 100%;
+            background-color: var(--background-color);
+            border-radius: 20px;
+            padding: clamp(20px, 5vw, 30px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .balance-title {
+            font-size: clamp(18px, 4vw, 24px);
+            color: var(--secondary-text);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .balance-amount {
+            font-size: clamp(48px, 12vw, 72px);
+            font-weight: 800;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(15px, 3vw, 20px);
+            text-shadow: 0 3px 15px rgba(255, 140, 66, 0.4);
+        }
+        
+        .star-icon {
+            font-size: clamp(42px, 10vw, 64px);
+            animation: pulseStar 2s infinite;
+        }
+        
+        @keyframes pulseStar {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .total-stars {
+            font-size: clamp(14px, 3vw, 18px);
+            color: #8a8a8a;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .actions-section {
+            width: 100%;
+            display: flex;
+            gap: clamp(15px, 3vw, 20px);
+            margin: 20px 0;
+        }
+        
+        .action-btn {
+            flex: 1;
+            min-height: clamp(80px, 18vh, 120px);
+            background-color: var(--button-color);
+            border: none;
+            border-radius: 15px;
+            padding: clamp(15px, 3vw, 25px);
+            color: var(--text-color);
+            font-size: clamp(18px, 4vw, 24px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 2vw, 15px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .action-btn:active {
+            transform: translateY(-2px);
+        }
+        
+        .action-btn.deposit {
+            background: linear-gradient(135deg, var(--primary-color), #ff6b00);
+            color: var(--background-color);
+        }
+        
+        .action-btn.withdraw {
+            background: linear-gradient(135deg, #5a5a5a, #3a3a3a);
+        }
+        
+        .arrow-icon {
+            font-size: clamp(28px, 6vw, 36px);
+            font-weight: 900;
+        }
+        
+        .history-section {
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .history-btn {
+            width: 100%;
+            min-height: clamp(80px, 18vh, 120px);
+            background: linear-gradient(135deg, #4a4a4a, #3a3a3a);
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            padding: clamp(15px, 3vw, 25px);
+            color: var(--text-color);
+            font-size: clamp(18px, 4vw, 24px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 2vw, 15px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+        }
+        
+        .history-btn:hover {
+            background: linear-gradient(135deg, #5a5a5a, #4a4a4a);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 140, 66, 0.2);
+        }
+        
+        .history-icon {
+            font-size: clamp(26px, 5vw, 32px);
+        }
+        
+        .check-info {
+            width: 100%;
+            margin: 20px 0;
+            padding: clamp(20px, 4vw, 30px);
+            background: linear-gradient(135deg, #2d2d2d, #3a3a3a);
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.3);
+            animation: floatCheck 3s infinite ease-in-out;
+        }
+        
+        @keyframes floatCheck {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .check-title {
+            color: var(--secondary-text);
+            font-size: clamp(22px, 5vw, 28px);
+            margin-bottom: 15px;
+        }
+        
+        .check-amount {
+            color: var(--primary-color);
+            font-size: clamp(42px, 10vw, 60px);
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-shadow: 0 3px 15px rgba(255, 140, 66, 0.4);
+        }
+        
+        .claim-btn {
+            width: 100%;
+            min-height: clamp(70px, 15vh, 100px);
+            background: linear-gradient(135deg, var(--primary-color), #ff6b00);
+            color: var(--background-color);
+            border: none;
+            border-radius: 15px;
+            padding: clamp(15px, 3vw, 25px);
+            font-size: clamp(22px, 5vw, 28px);
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 140, 66, 0.4);
+            letter-spacing: 1px;
+            touch-action: manipulation;
+        }
+        
+        .claim-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(255, 140, 66, 0.6);
+        }
+        
+        .footer {
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: auto;
+            color: #8a8a8a;
+            font-size: clamp(14px, 3vw, 18px);
+            border-top: 2px solid #4a4a4a;
+        }
+        
+        .logo-text {
+            color: var(--primary-color);
+            font-weight: 800;
+            font-size: clamp(18px, 4vw, 22px);
+        }
+        
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(45, 45, 45, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loader-content {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        
+        .spinner {
+            width: clamp(60px, 12vw, 80px);
+            height: clamp(60px, 12vw, 80px);
+            border: 8px solid #3a3a3a;
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Анимации для кнопок */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Улучшения для тач-устройств */
+        @media (hover: none) and (pointer: coarse) {
+            .action-btn:hover, .history-btn:hover, .claim-btn:hover {
+                transform: none;
+            }
+            
+            .action-btn:active, .history-btn:active, .claim-btn:active {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+        }
+        
+        /* Оптимизация для очень маленьких экранов */
+        @media (max-height: 600px) {
+            .header { padding: 10px 0; }
+            .username { margin-bottom: 10px; }
+            .balance-section, .actions-section, .history-section { margin: 10px 0; }
+            .balance-container { padding: 15px; }
+            .action-btn, .history-btn { min-height: 70px; }
+            .check-info { padding: 15px; margin: 10px 0; }
+        }
+        
+        /* Оптимизация для больших экранов компьютеров */
+        @media (min-width: 1200px) and (min-height: 800px) {
+            #app { 
+                max-width: 650px; 
+                min-height: 800px;
+                margin-top: calc((100vh - 800px) / 2);
+            }
+            
+            .balance-amount { font-size: 80px; }
+            .star-icon { font-size: 72px; }
+            .action-btn, .history-btn { min-height: 130px; font-size: 26px; }
+            .check-amount { font-size: 68px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="content">
+            <div class="header">
+                <div class="username" id="username">FOSSTARS USER</div>
+            </div>
+            
+            <div class="balance-section">
+                <div class="balance-container">
+                    <div class="balance-title">ВАШ БАЛАНС</div>
+                    <div class="balance-amount">
+                        <span id="balance">0</span>
+                        <span class="star-icon">⭐</span>
+                    </div>
+                    <div class="total-stars">ОБЩЕЕ КОЛИЧЕСТВО ЗВЁЗД</div>
+                </div>
+            </div>
+            
+            <div class="actions-section">
+                <button class="action-btn deposit" id="depositBtn">
+                    <span class="arrow-icon">↑</span>
+                    <span>ПОПОЛНИТЬ</span>
+                </button>
+                <button class="action-btn withdraw" id="withdrawBtn">
+                    <span class="arrow-icon">↓</span>
+                    <span>ВЫВЕСТИ</span>
+                </button>
+            </div>
+            
+            <div class="history-section">
+                <button class="history-btn" id="historyBtn">
+                    <span class="history-icon">📊</span>
+                    <span>ИСТОРИЯ ТРАНЗАКЦИЙ</span>
+                </button>
+            </div>
+            
+            <div class="check-info" id="checkInfo" style="display: none;">
+                <div class="check-title">ДОСТУПНЫЙ ЧЕК</div>
+                <div class="check-amount" id="checkAmount">100 ⭐</div>
+                <button class="claim-btn" id="claimBtn">ЗАБРАТЬ ЗВЁЗДЫ</button>
+            </div>
+            
+            <div class="footer">
+                <span class="logo-text">FOSSTARS</span> BOT • ВАШ НАДЁЖНЫЙ ПАРТНЁР
+            </div>
+        </div>
+    </div>
+    
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div id="loaderText" style="font-size: clamp(18px, 4vw, 24px); font-weight: 700;">ЗАГРУЗКА...</div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Создаем снежинки
+            createSnowflakes();
+            
+            // Получаем параметры из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+            const balance = urlParams.get('balance');
+            const checkId = urlParams.get('check_id');
+            const stars = urlParams.get('stars');
+            
+            // Получаем элементы DOM
+            const usernameElement = document.getElementById('username');
+            const balanceElement = document.getElementById('balance');
+            const depositBtn = document.getElementById('depositBtn');
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            const historyBtn = document.getElementById('historyBtn');
+            const claimBtn = document.getElementById('claimBtn');
+            const checkInfo = document.getElementById('checkInfo');
+            const checkAmount = document.getElementById('checkAmount');
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loaderText');
+            const app = document.getElementById('app');
+            
+            // Адаптация высоты на мобильных устройствах
+            function adjustHeight() {
+                // Для мобильных устройств с виртуальной клавиатурой
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    app.style.height = window.innerHeight + 'px';
+                }
+            }
+            
+            // Вызываем при загрузке и изменении размера
+            adjustHeight();
+            window.addEventListener('resize', adjustHeight);
+            window.addEventListener('orientationchange', adjustHeight);
+            
+            // Устанавливаем данные пользователя
+            if (userId) {
+                usernameElement.textContent = `USER #${userId}`;
+            } else {
+                usernameElement.textContent = 'FOSSTARS USER';
+            }
+            
+            if (balance) {
+                balanceElement.textContent = balance;
+                // Добавляем анимацию при загрузке баланса
+                balanceElement.style.animation = 'pulse 1s ease';
+                setTimeout(() => {
+                    balanceElement.style.animation = '';
+                }, 1000);
+            } else {
+                // Если баланс не передан, делаем запрос (в реальном приложении)
+                setTimeout(() => {
+                    balanceElement.textContent = '0';
+                }, 500);
+            }
+            
+            // Проверяем, есть ли чек
+            if (checkId && stars) {
+                checkAmount.textContent = `${stars} ⭐`;
+                checkInfo.style.display = 'block';
+            }
+            
+            // Функция для показа загрузки
+            function showLoader(text = 'ЗАГРУЗКА...') {
+                loaderText.textContent = text;
+                loader.style.display = 'flex';
+            }
+            
+            // Функция для скрытия загрузки
+            function hideLoader() {
+                loader.style.display = 'none';
+            }
+            
+            // Обработчики кнопок
+            depositBtn.addEventListener('click', function() {
+                showLoader('ОТКРЫВАЕМ ПОПОЛНЕНИЕ...');
+                // Отправляем данные в бота
+                if (window.Telegram && window.Telegram.WebApp) {
+                    Telegram.WebApp.sendData(JSON.stringify({
+                        action: 'deposit',
+                        user_id: userId
+                    }));
+                } else {
+                    // Для тестирования вне Telegram
+                    setTimeout(() => {
+                        hideLoader();
+                        // Показываем имитацию пополнения
+                        const currentBalance = parseInt(balanceElement.textContent);
+                        const newBalance = currentBalance + 100;
+                        balanceElement.textContent = newBalance;
+                        alert('ПОПОЛНЕНИЕ УСПЕШНО!\n+100 ⭐');
+                    }, 1500);
+                }
+            });
+            
+            withdrawBtn.addEventListener('click', function() {
+                showLoader('ОТКРЫВАЕМ ВЫВОД...');
+                // Отправляем данные в бота
+                if (window.Telegram && window.Telegram.WebApp) {
+                    Telegram.WebApp.sendData(JSON.stringify({
+                        action: 'withdraw',
+                        user_id: userId
+                    }));
+                } else {
+                    // Для тестирования вне Telegram
+                    setTimeout(() => {
+                        hideLoader();
+                        const currentBalance = parseInt(balanceElement.textContent);
+                        if (currentBalance >= 50) {
+                            const newBalance = currentBalance - 50;
+                            balanceElement.textContent = newBalance;
+                            alert('ВЫВОД УСПЕШЕН!\n-50 ⭐');
+                        } else {
+                            alert('НЕДОСТАТОЧНО СРЕДСТВ');
+                        }
+                    }, 1500);
+                }
+            });
+            
+            historyBtn.addEventListener('click', function() {
+                showLoader('ЗАГРУЖАЕМ ИСТОРИЮ...');
+                // В реальном приложении здесь был бы запрос к API
+                setTimeout(() => {
+                    hideLoader();
+                    alert('ИСТОРИЯ ТРАНЗАКЦИЙ:\n\n' +
+                          '• ПОПОЛНЕНИЕ +100 ⭐ (12:45)\n' +
+                          '• ВЫВОД -50 ⭐ (11:20)\n' +
+                          '• ЧЕК +100 ⭐ (10:15)\n' +
+                          '• ПОПОЛНЕНИЕ +200 ⭐ (09:30)');
+                }, 2000);
+            });
+            
+            claimBtn.addEventListener('click', function() {
+                showLoader('ПОЛУЧАЕМ ЗВЁЗДЫ...');
+                
+                // Отправляем данные о чеке
+                if (window.Telegram && window.Telegram.WebApp) {
+                    Telegram.WebApp.sendData(JSON.stringify({
+                        action: 'claim',
+                        check_id: checkId,
+                        stars: stars,
+                        user_id: userId
+                    }));
+                } else {
+                    // Для тестирования вне Telegram
+                    setTimeout(() => {
+                        hideLoader();
+                        // Обновляем баланс
+                        const currentBalance = parseInt(balanceElement.textContent);
+                        const newBalance = currentBalance + parseInt(stars);
+                        balanceElement.textContent = newBalance;
+                        
+                        // Скрываем блок с чеком
+                        checkInfo.style.display = 'none';
+                        
+                        // Показываем уведомление
+                        alert(`УСПЕШНО!\nВАМ НАЧИСЛЕНО ${stars} ⭐`);
+                    }, 1500);
+                }
+            });
+            
+            // Добавляем анимацию пульсации к кнопке пополнения
+            setInterval(() => {
+                depositBtn.classList.add('pulse');
+                setTimeout(() => {
+                    depositBtn.classList.remove('pulse');
+                }, 2000);
+            }, 5000);
+            
+            // Инициализация Telegram Web App
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.setHeaderColor('#2d2d2d');
+                Telegram.WebApp.setBackgroundColor('#2d2d2d');
+                Telegram.WebApp.enableClosingConfirmation();
+                
+                // Для Telegram Web App устанавливаем корректную высоту
+                Telegram.WebApp.setViewportHeight();
+            }
+        });
+        
+        // Функция для создания снежинок
+        function createSnowflakes() {
+            const app = document.getElementById('app');
+            const isMobile = window.innerWidth <= 768;
+            const snowflakeCount = isMobile ? 15 : 25;
+            
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                
+                // Случайный размер от 3 до 8 пикселей
+                const size = Math.random() * 5 + 3;
+                snowflake.style.width = `${size}px`;
+                snowflake.style.height = `${size}px`;
+                
+                // Случайная позиция
+                snowflake.style.left = `${Math.random() * 100}%`;
+                snowflake.style.top = `-20px`;
+                
+                // Случайная продолжительность анимации
+                const duration = Math.random() * 15 + 15;
+                snowflake.style.animationDuration = `${duration}s`;
+                
+                // Случайная задержка
+                const delay = Math.random() * 10;
+                snowflake.style.animationDelay = `${delay}s`;
+                
+                app.appendChild(snowflake);
+            }
+        }
+    </script>
+</body>
+</html>
